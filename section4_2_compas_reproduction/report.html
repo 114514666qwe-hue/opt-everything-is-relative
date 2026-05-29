@@ -1,219 +1,342 @@
-<!doctype html>
-<html lang="zh-CN">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Section 4.2 COMPAS 复现实验报告</title>
-  <style>
-    :root {
-      color-scheme: light;
-      --ink: #1f2933;
-      --muted: #5f6b7a;
-      --line: #d8dee8;
-      --soft: #f5f7fa;
-      --accent: #0f766e;
-      --accent-2: #c2410c;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: var(--ink);
-      background: #ffffff;
-      line-height: 1.6;
-    }
-    header {
-      padding: 48px 28px 36px;
-      border-bottom: 1px solid var(--line);
-      background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
-    }
-    main { max-width: 1120px; margin: 0 auto; padding: 28px; }
-    .hero { max-width: 1120px; margin: 0 auto; }
-    h1 { margin: 0 0 12px; font-size: clamp(2rem, 4vw, 3.6rem); line-height: 1.05; }
-    h2 { margin: 42px 0 12px; font-size: 1.65rem; border-bottom: 1px solid var(--line); padding-bottom: 8px; }
-    h3 { margin: 28px 0 8px; font-size: 1.2rem; }
-    p { margin: 10px 0; }
-    a { color: var(--accent); text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    code, pre {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      background: #f1f5f9;
-      border: 1px solid #e2e8f0;
-      border-radius: 6px;
-    }
-    code { padding: 1px 5px; }
-    pre { padding: 14px; overflow-x: auto; }
-    .lead { color: var(--muted); font-size: 1.08rem; max-width: 920px; }
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 12px;
-      margin: 22px 0;
-    }
-    .card {
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      padding: 14px;
-      background: var(--soft);
-    }
-    .card strong { display: block; font-size: 1.45rem; color: var(--accent); }
-    figure { margin: 24px 0; }
-    figure img {
-      width: 100%;
-      height: auto;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: #fff;
-    }
-    figcaption { color: var(--muted); font-size: 0.95rem; margin-top: 8px; }
-    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }
-    table { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 0.92rem; }
-    th, td { border-bottom: 1px solid var(--line); padding: 9px 10px; text-align: left; vertical-align: top; }
-    th { background: #eef2f7; font-weight: 700; }
-    tr:last-child td { border-bottom: none; }
-    td.num { text-align: right; font-variant-numeric: tabular-nums; }
-    table.matrix { min-width: 520px; }
-    .callout {
-      border-left: 4px solid var(--accent);
-      background: #ecfdf5;
-      padding: 12px 14px;
-      border-radius: 6px;
-      margin: 16px 0;
-    }
-    .warning {
-      border-left-color: var(--accent-2);
-      background: #fff7ed;
-    }
-    .files li { margin: 5px 0; }
-    footer {
-      margin-top: 46px;
-      padding-top: 18px;
-      border-top: 1px solid var(--line);
-      color: var(--muted);
-      font-size: 0.92rem;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Section 4.2 — COMPAS Reproduction</title>
+<script>
+MathJax = {
+  tex: { inlineMath: [['$','$']] },
+  options: { skipHtmlTags: ['script','noscript','style','textarea'] }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Georgia", serif;
+    background: #fafafa;
+    color: #1a1a2e;
+    line-height: 1.75;
+    padding: 0 0 60px;
+  }
+  .hero {
+    background: #1a1a2e;
+    color: #fff;
+    padding: 44px 60px 36px;
+  }
+  .hero .label {
+    font-family: monospace;
+    font-size: 0.72em;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #8899bb;
+    margin-bottom: 10px;
+  }
+  .hero h1 {
+    font-size: 1.75em;
+    font-weight: 700;
+    line-height: 1.25;
+    margin-bottom: 10px;
+    color: #e8eaf6;
+  }
+  .hero .meta {
+    font-size: 0.83em;
+    color: #8899bb;
+    font-family: sans-serif;
+  }
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 36px;
+  }
+  h2 {
+    font-size: 1.12em;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin: 44px 0 12px;
+    padding-bottom: 6px;
+    border-bottom: 1.5px solid #dde;
+  }
+  h3 {
+    font-size: 0.97em;
+    font-weight: 700;
+    color: #333;
+    margin: 28px 0 8px;
+  }
+  p { margin: 10px 0; font-size: 0.97em; }
+  a { color: #0f766e; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 0.9em;
+    margin: 16px 0;
+  }
+  th, td {
+    border: 1px solid #dde;
+    padding: 8px 14px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th { background: #f0f0f8; font-weight: 600; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  table.matrix { min-width: 520px; }
+  .table-wrap { overflow-x: auto; }
+  blockquote {
+    border-left: 3px solid #8899bb;
+    margin: 18px 0;
+    padding: 10px 18px;
+    background: #f4f6fb;
+    font-size: 0.91em;
+    color: #444;
+    border-radius: 0 4px 4px 0;
+  }
+  blockquote strong { color: #1a1a2e; }
+  .fig-wrap {
+    margin: 22px 0;
+    text-align: center;
+  }
+  .fig-wrap .report-figure {
+    width: 100%;
+    max-width: 860px;
+    height: auto;
+    border: 1px solid #e5e5ef;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    background: #fff;
+  }
+  .fig-cap {
+    font-size: 0.82em;
+    color: #666;
+    font-family: sans-serif;
+    margin-top: 8px;
+  }
+  pre.code {
+    background: #1e1e2e;
+    color: #cdd6f4;
+    border-radius: 6px;
+    padding: 18px 22px;
+    font-size: 0.83em;
+    font-family: "Fira Code", "Courier New", monospace;
+    overflow-x: auto;
+    line-height: 1.6;
+    margin: 14px 0 20px;
+    border: 1px solid #313244;
+  }
+  code {
+    font-family: "Fira Code", "Courier New", monospace;
+    background: #eef1f7;
+    border: 1px solid #dde;
+    border-radius: 4px;
+    padding: 1px 4px;
+  }
+  pre.code code {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    color: inherit;
+  }
+  .math-block {
+    text-align: center;
+    margin: 18px 0;
+    font-size: 1.05em;
+  }
+  hr {
+    border: none;
+    border-top: 1px solid #dde;
+    margin: 36px 0;
+  }
+  @media (max-width: 640px) {
+    .hero { padding: 34px 24px 28px; }
+    .container { padding: 0 22px; }
+    table { font-size: 0.82em; }
+  }
+</style>
 </head>
 <body>
-  <header>
-    <div class="hero">
-      <h1>Section 4.2 COMPAS 复现实验报告</h1>
-      <p class="lead">基于 ProPublica COMPAS 数据，对论文 <em>Everything is Relative: Understanding Fairness with Optimal Transport</em> 的 Section 4.2 做审计式复现。重点是重建数据过滤、logistic policy、optimal transport coupling、group-wise bias decomposition，并制作 Figure 3A/3B 风格图。</p>
-    </div>
-  </header>
-  <main>
-    <section>
-      <h2>结论摘要</h2>
-      <div class="callout">
-        <p><strong>复现结论：</strong>数据过滤和 OT 方法链路可以复现，A/B 图的视觉结构已经重建；但原文 Figure 3A/3B 的精确流带宽度无法仅凭论文唯一推出。</p>
-      </div>
-      <p>最接近原文第一处数字的是 <code>criminal_only_compas_groups</code>：原文 <code>WhiteLow -> BlackHigh</code> 为 43.8%，本复现为 46.94%。但原文 <code>BlackHigh -> WhiteLow</code> 为 48.3%，本复现最佳分支仍只有 8.02%。这说明本文实验存在未公开的实现细节。</p>
-    </section>
 
-    <section>
-      <h2>数据核对</h2>
-      <p>数据来自 ProPublica 的 <a href="https://github.com/propublica/compas-analysis">compas-analysis</a> 仓库，使用标准过滤条件后，关键计数与论文附录一致。</p>
-      <div class="cards">
-        <div class="card"><span>原始样本</span><strong>7214</strong></div>
-        <div class="card"><span>过滤后样本</span><strong>6172</strong></div>
-        <div class="card"><span>Black</span><strong>3175</strong></div>
-        <div class="card"><span>White</span><strong>2103</strong></div>
-        <div class="card"><span>Two-year recidivists</span><strong>2809</strong></div>
-      </div>
-      <pre><code>-30 &lt;= days_b_screening_arrest &lt;= 30
+<div class="hero">
+  <div class="label">Section 4.2</div>
+  <h1>COMPAS Experiment: Optimal Transport View</h1>
+  <div class="meta">Kwegyir-Aggrey, K., Santorella, R., Brown, S. M. &nbsp;·&nbsp; arXiv:2102.10349v1</div>
+</div>
+
+<div class="container">
+
+<h2>Setup</h2>
+
+<p>The experiment compares the ground-truth recidivism policy with COMPAS-style predictions on the ProPublica COMPAS dataset. Scores are binarized as <code>Low</code> vs. <code>Medium/High</code>, then grouped by race and risk label:</p>
+
+<table>
+  <tr><th>Object</th><th>Definition used here</th></tr>
+  <tr><td><strong>$F_{true}$</strong></td><td>Logistic regression score for two-year recidivism.</td></tr>
+  <tr><td><strong>$F_{compas}$</strong></td><td>Logistic regression score for the binary COMPAS label.</td></tr>
+  <tr><td><strong>Groups</strong></td><td><code>WhiteLow</code>, <code>WhiteHigh</code>, <code>BlackLow</code>, <code>BlackHigh</code>.</td></tr>
+  <tr><td><strong>OT cost</strong></td><td>$C_{ij}=\left\|F_{true}(x_i)-F_{pred}(x_j)\right\|_2$.</td></tr>
+</table>
+
+<p>For two-class outputs this cost is equivalent to sorting the predicted probabilities and matching quantiles. The script therefore computes the exact one-dimensional equal-mass OT coupling instead of storing a dense linear program.</p>
+
+<hr>
+
+<h2>Data Check</h2>
+
+<p>The filtering follows the standard ProPublica COMPAS analysis. These counts match the paper appendix, so the data slice is likely the same even though the authors did not release code.</p>
+
+<div class="table-wrap"><table><thead><tr><th></th><th>Count</th></tr></thead><tbody><tr><td class="num">Raw rows</td><td class="num">7,214.00</td></tr><tr><td class="num">Filtered rows</td><td class="num">6,172.00</td></tr><tr><td class="num">Black defendants</td><td class="num">3,175.00</td></tr><tr><td class="num">White defendants</td><td class="num">2,103.00</td></tr><tr><td class="num">Two-year recidivists</td><td class="num">2,809.00</td></tr></tbody></table></div>
+
+<pre class="code"><code>-30 &lt;= days_b_screening_arrest &lt;= 30
 is_recid != -1
 c_charge_degree != "O"
 score_text != "N/A"</code></pre>
-    </section>
 
-    <section>
-      <h2>实验原理</h2>
-      <p>论文比较同一批个体上的两个 policy：<code>F_true</code> 拟合真实 two-year recidivism，<code>F_compas</code> 拟合 COMPAS 二元风险标签。这里将 <code>Low</code> 作为低风险，将 <code>Medium/High</code> 合并为高风险。</p>
-      <p>每个 policy 输出二分类概率向量：</p>
-      <pre><code>F(x_i) = [1 - p_i, p_i]
-C_ij = ||F_true(x_i) - F_pred(x_j)||_2</code></pre>
-      <p>二分类时，这个代价与 <code>|p_i - p_j|</code> 只差常数因子，因此脚本用一维分位数匹配精确求解 equal-mass empirical optimal transport。得到 coupling 后，再按四个 subgroup 聚合：<code>WhiteLow</code>、<code>WhiteHigh</code>、<code>BlackLow</code>、<code>BlackHigh</code>。</p>
-      <p>脚本同时保存 raw transport mass 分解和 <code>mass * feature_distance</code> 的 group-wise bias 分解。后者更接近论文的 individual/group bias 定义。</p>
-    </section>
+<hr>
 
-    <section>
-      <h2>Figure 3A/3B 风格图</h2>
-      <figure>
-        <img src="outputs/figure3_ab_style.svg" alt="Figure 3 A and B style alluvial reproduction">
-        <figcaption>A 图右侧使用 COMPAS 二元风险标签；B 图右侧使用 equal-opportunity proxy classifier。图用于复现视觉结构和实验逻辑，流带宽度不是原文精确数值。</figcaption>
-      </figure>
-      <div class="cards">
-        <div class="card"><a href="outputs/figure3A_compas_style.svg">打开 A 图单图</a></div>
-        <div class="card"><a href="outputs/figure3B_equal_opportunity_proxy_style.svg">打开 B 图单图</a></div>
-        <div class="card"><a href="outputs/figure3A_compas_style_mass_row_pct.csv">A 图 mass 矩阵</a></div>
-        <div class="card"><a href="outputs/figure3B_equal_opportunity_proxy_style_mass_row_pct.csv">B 图 mass 矩阵</a></div>
-      </div>
-    </section>
+<h2>Figure 3A/3B Style Reconstruction</h2>
 
-    <section>
-      <h2>Equal Opportunity Classifier 推测</h2>
-      <p>论文说第三个 logistic regression 训练在 COMPAS labels 上，并使用 Zafar et al. 的 equal opportunity constraint。论文背景部分将 Equal Opportunity 定义为真实正类条件下不同敏感组预测正率相等，也就是 equal TPR，等价于 equal FNR。</p>
-      <p>查到的 Zafar 公开实现是 <a href="https://github.com/mbilalzafar/fair-classification">fair-classification</a>。其中 <a href="https://github.com/mbilalzafar/fair-classification/tree/master/disparate_mistreatment">disparate_mistreatment</a> 支持 FPR/FNR 约束，COMPAS demo 在 <a href="https://github.com/mbilalzafar/fair-classification/tree/master/disparate_mistreatment/propublica_compas_data_demo">propublica_compas_data_demo</a>。因此本复现推测 Figure 3B 更接近 FNR/TPR constraint，而非普通 unconstrained logistic regression。</p>
-      <p>由于原文未给代码、划分、阈值、<code>tau</code>/<code>mu</code> 等参数，本复现使用一个透明代理模型：</p>
-      <pre><code>logistic loss on COMPAS label
+<p>The alluvial plot below is embedded directly in this HTML file, so GitHub Pages does not need to resolve a separate image path.</p>
+
+<div class="fig-wrap">
+<svg class="report-figure" xmlns="http://www.w3.org/2000/svg" width="1200" height="430" viewBox="0 0 1200 430" role="img">
+<style>
+  text { font-family: Arial, Helvetica, sans-serif; letter-spacing: 0; }
+  .panel-label { font-size: 28px; font-weight: 700; fill: #111; }
+  .axis-label { font-size: 18px; font-weight: 700; fill: #111; }
+  .group-label { font-size: 14px; fill: #333; paint-order: stroke; stroke: rgba(255,255,255,0.82); stroke-width: 3px; stroke-linejoin: round; }
+</style>
+<rect width="100%" height="100%" fill="white"/>
+<g transform="translate(0,0)">
+<path d="M 82 58 C 275.5 58 318.5 58 512 58 L 512 89.196 C 318.5 89.196 275.5 89.196 82 89.196 Z" fill="#009E73" opacity="0.98"/>
+<path d="M 82 89.196 C 275.5 89.196 318.5 144.91 512 144.91 L 512 152.873 C 318.5 152.873 275.5 97.159 82 97.159 Z" fill="#009E73" opacity="0.98"/>
+<path d="M 82 97.159 C 275.5 97.159 318.5 195.987 512 195.987 L 512 209.292 C 318.5 209.292 275.5 110.464 82 110.464 Z" fill="#009E73" opacity="0.98"/>
+<path d="M 82 110.464 C 275.5 110.464 318.5 279.822 512 279.822 L 512 291.918 C 318.5 291.918 275.5 122.56 82 122.56 Z" fill="#009E73" opacity="0.98"/>
+<path d="M 82 138.56 C 275.5 138.56 318.5 89.196 512 89.196 L 512 101.09 C 318.5 101.09 275.5 150.454 82 150.454 Z" fill="#D55E00" opacity="0.98"/>
+<path d="M 82 150.454 C 275.5 150.454 318.5 152.873 512 152.873 L 512 158.87 C 318.5 158.87 275.5 156.451 82 156.451 Z" fill="#D55E00" opacity="0.98"/>
+<path d="M 82 156.451 C 275.5 156.451 318.5 209.292 512 209.292 L 512 218.615 C 318.5 218.615 275.5 165.775 82 165.775 Z" fill="#D55E00" opacity="0.98"/>
+<path d="M 82 165.775 C 275.5 165.775 318.5 291.918 512 291.918 L 512 306.13 C 318.5 306.13 275.5 179.987 82 179.987 Z" fill="#D55E00" opacity="0.98"/>
+<path d="M 82 195.987 C 275.5 195.987 318.5 101.09 512 101.09 L 512 119.233 C 318.5 119.233 275.5 214.13 82 214.13 Z" fill="#0072B2" opacity="0.98"/>
+<path d="M 82 214.13 C 275.5 214.13 318.5 158.87 512 158.87 L 512 168.849 C 318.5 168.849 275.5 224.109 82 224.109 Z" fill="#0072B2" opacity="0.98"/>
+<path d="M 82 224.109 C 275.5 224.109 318.5 218.615 512 218.615 L 512 242.655 C 318.5 242.655 275.5 248.149 82 248.149 Z" fill="#0072B2" opacity="0.98"/>
+<path d="M 82 248.149 C 275.5 248.149 318.5 306.13 512 306.13 L 512 330.271 C 318.5 330.271 275.5 272.289 82 272.289 Z" fill="#0072B2" opacity="0.98"/>
+<path d="M 82 288.289 C 275.5 288.289 318.5 119.233 512 119.233 L 512 128.91 C 318.5 128.91 275.5 297.966 82 297.966 Z" fill="#E69F00" opacity="0.98"/>
+<path d="M 82 297.966 C 275.5 297.966 318.5 168.849 512 168.849 L 512 179.987 C 318.5 179.987 275.5 309.103 82 309.103 Z" fill="#E69F00" opacity="0.98"/>
+<path d="M 82 309.103 C 275.5 309.103 318.5 242.655 512 242.655 L 512 263.822 C 318.5 263.822 275.5 330.271 82 330.271 Z" fill="#E69F00" opacity="0.98"/>
+<path d="M 82 330.271 C 275.5 330.271 318.5 330.271 512 330.271 L 512 372 C 318.5 372 275.5 372 82 372 Z" fill="#E69F00" opacity="0.98"/>
+<rect x="52" y="58" width="30" height="64.56" fill="#009E73" stroke="#333" stroke-width="1"/>
+<text class="group-label" x="60" y="94.28" text-anchor="start">WhiteLow</text>
+<rect x="52" y="138.56" width="30" height="41.427" fill="#D55E00" stroke="#333" stroke-width="1"/>
+<text class="group-label" x="60" y="163.273" text-anchor="start">WhiteHigh</text>
+<rect x="52" y="195.987" width="30" height="76.302" fill="#0072B2" stroke="#333" stroke-width="1"/>
+<text class="group-label" x="60" y="238.138" text-anchor="start">BlackLow</text>
+<rect x="52" y="288.289" width="30" height="83.711" fill="#E69F00" stroke="#333" stroke-width="1"/>
+<text class="group-label" x="60" y="334.145" text-anchor="start">BlackHigh</text>
+<rect x="512" y="58" width="30" height="70.91" fill="#009E73" stroke="#333" stroke-width="1"/>
+<text class="group-label" x="534" y="97.455" text-anchor="end">WhiteLow</text>
+<rect x="512" y="144.91" width="30" height="35.077" fill="#D55E00" stroke="#333" stroke-width="1"/>
+<text class="group-label" x="534" y="166.448" text-anchor="end">WhiteHigh</text>
+<rect x="512" y="195.987" width="30" height="67.836" fill="#0072B2" stroke="#333" stroke-width="1"/>
+<text class="group-label" x="534" y="233.905" text-anchor="end">BlackLow</text>
+<rect x="512" y="279.822" width="30" height="92.178" fill="#E69F00" stroke="#333" stroke-width="1"/>
+<text class="group-label" x="534" y="329.911" text-anchor="end">BlackHigh</text>
+<text class="panel-label" x="20" y="36">A.</text>
+<text class="axis-label" x="52" y="404" text-anchor="start">Ground Truth</text>
+<text class="axis-label" x="542" y="404" text-anchor="end">Predicted</text>
+</g>
+<g transform="translate(600,0)">
+<path d="M 82 58 C 275.5 58 318.5 58 512 58 L 512 83.451 C 318.5 83.451 275.5 83.451 82 83.451 Z" fill="#009E73" opacity="0.98"/>
+<path d="M 82 83.451 C 275.5 83.451 318.5 134.83 512 134.83 L 512 139.013 C 318.5 139.013 275.5 87.634 82 87.634 Z" fill="#009E73" opacity="0.98"/>
+<path d="M 82 87.634 C 275.5 87.634 318.5 195.987 512 195.987 L 512 223.756 C 318.5 223.756 275.5 115.403 82 115.403 Z" fill="#009E73" opacity="0.98"/>
+<path d="M 82 115.403 C 275.5 115.403 318.5 303.056 512 303.056 L 512 310.212 C 318.5 310.212 275.5 122.56 82 122.56 Z" fill="#009E73" opacity="0.98"/>
+<path d="M 82 138.56 C 275.5 138.56 318.5 83.451 512 83.451 L 512 95.546 C 318.5 95.546 275.5 150.655 82 150.655 Z" fill="#D55E00" opacity="0.98"/>
+<path d="M 82 150.655 C 275.5 150.655 318.5 139.013 512 139.013 L 512 146.523 C 318.5 146.523 275.5 158.164 82 158.164 Z" fill="#D55E00" opacity="0.98"/>
+<path d="M 82 158.164 C 275.5 158.164 318.5 223.756 512 223.756 L 512 236.456 C 318.5 236.456 275.5 170.865 82 170.865 Z" fill="#D55E00" opacity="0.98"/>
+<path d="M 82 170.865 C 275.5 170.865 318.5 310.212 512 310.212 L 512 319.334 C 318.5 319.334 275.5 179.987 82 179.987 Z" fill="#D55E00" opacity="0.98"/>
+<path d="M 82 195.987 C 275.5 195.987 318.5 95.546 512 95.546 L 512 111.069 C 318.5 111.069 275.5 211.509 82 211.509 Z" fill="#0072B2" opacity="0.98"/>
+<path d="M 82 211.509 C 275.5 211.509 318.5 146.523 512 146.523 L 512 157.156 C 318.5 157.156 275.5 222.143 82 222.143 Z" fill="#0072B2" opacity="0.98"/>
+<path d="M 82 222.143 C 275.5 222.143 318.5 236.456 512 236.456 L 512 270.072 C 318.5 270.072 275.5 255.759 82 255.759 Z" fill="#0072B2" opacity="0.98"/>
+<path d="M 82 255.759 C 275.5 255.759 318.5 319.334 512 319.334 L 512 335.865 C 318.5 335.865 275.5 272.289 82 272.289 Z" fill="#0072B2" opacity="0.98"/>
+<path d="M 82 288.289 C 275.5 288.289 318.5 111.069 512 111.069 L 512 118.83 C 318.5 118.83 275.5 296.05 82 296.05 Z" fill="#E69F00" opacity="0.98"/>
+<path d="M 82 296.05 C 275.5 296.05 318.5 157.156 512 157.156 L 512 179.987 C 318.5 179.987 275.5 318.881 82 318.881 Z" fill="#E69F00" opacity="0.98"/>
+<path d="M 82 318.881 C 275.5 318.881 318.5 270.072 512 270.072 L 512 287.056 C 318.5 287.056 275.5 335.865 82 335.865 Z" fill="#E69F00" opacity="0.98"/>
+<path d="M 82 335.865 C 275.5 335.865 318.5 335.865 512 335.865 L 512 372 C 318.5 372 275.5 372 82 372 Z" fill="#E69F00" opacity="0.98"/>
+<rect x="52" y="58" width="30" height="64.56" fill="#009E73" stroke="#333" stroke-width="1"/>
+<text class="group-label" x="60" y="94.28" text-anchor="start">WhiteLow</text>
+<rect x="52" y="138.56" width="30" height="41.427" fill="#D55E00" stroke="#333" stroke-width="1"/>
+<text class="group-label" x="60" y="163.273" text-anchor="start">WhiteHigh</text>
+<rect x="52" y="195.987" width="30" height="76.302" fill="#0072B2" stroke="#333" stroke-width="1"/>
+<text class="group-label" x="60" y="238.138" text-anchor="start">BlackLow</text>
+<rect x="52" y="288.289" width="30" height="83.711" fill="#E69F00" stroke="#333" stroke-width="1"/>
+<text class="group-label" x="60" y="334.145" text-anchor="start">BlackHigh</text>
+<rect x="512" y="58" width="30" height="60.83" fill="#009E73" stroke="#333" stroke-width="1"/>
+<text class="group-label" x="534" y="92.415" text-anchor="end">WhiteLow</text>
+<rect x="512" y="134.83" width="30" height="45.156" fill="#D55E00" stroke="#333" stroke-width="1"/>
+<text class="group-label" x="534" y="161.408" text-anchor="end">WhiteHigh</text>
+<rect x="512" y="195.987" width="30" height="91.069" fill="#0072B2" stroke="#333" stroke-width="1"/>
+<text class="group-label" x="534" y="245.521" text-anchor="end">BlackLow</text>
+<rect x="512" y="303.056" width="30" height="68.944" fill="#E69F00" stroke="#333" stroke-width="1"/>
+<text class="group-label" x="534" y="341.528" text-anchor="end">BlackHigh</text>
+<text class="panel-label" x="20" y="36">B.</text>
+<text class="axis-label" x="52" y="404" text-anchor="start">Ground Truth</text>
+<text class="axis-label" x="542" y="404" text-anchor="end">Predicted</text>
+</g>
+</svg>
+
+  <div class="fig-cap">Figure 3-style transport maps. A uses COMPAS predictions; B uses the equal-opportunity proxy classifier. Widths reproduce the qualitative structure, not the paper's exact hidden implementation.</div>
+</div>
+
+<blockquote>
+<strong>Reading the plot.</strong><br>
+The left side is the ground-truth risk group; the right side is the predicted risk group. A large crossing band indicates that individuals in one subgroup are transported toward outcomes typical of another subgroup.
+</blockquote>
+
+<hr>
+
+<h2>Equal Opportunity Classifier</h2>
+
+<p>The paper says its third classifier is a logistic regression trained on COMPAS labels with the Zafar et al. equal-opportunity constraint. The exact code, split, threshold, and constraint strength are not given.</p>
+
+<p>Here it is treated as an FNR/TPR constraint: among true recidivists, Black and White predicted positive rates should be close. The proxy used here is</p>
+
+<pre class="code"><code>logistic loss on COMPAS label
 + penalty * (mean_score_black_true_positive - mean_score_white_true_positive)^2</code></pre>
-      <p>详细说明见 <a href="EQUAL_OPPORTUNITY_CLASSIFIER_NOTES.md">EQUAL_OPPORTUNITY_CLASSIFIER_NOTES.md</a>。</p>
-    </section>
 
-    <section>
-      <h2>与原文数值对比</h2>
-      <div class="table-wrap"><table><thead><tr><th>Metric</th><th>Paper</th><th>Expanded</th><th>EO proxy</th><th>Paper-ish</th><th>Criminal only</th><th>Paper model + criminal distance</th></tr></thead><tbody><tr><td class="">WhiteLow_to_BlackHigh_bias_share</td><td class="num">43.80</td><td class="num">23.53</td><td class="num">27.09</td><td class="num">17.38</td><td class="num">46.94</td><td class="num">21.66</td></tr><tr><td class="">BlackHigh_to_WhiteLow_bias_share</td><td class="num">48.30</td><td class="num">9.81</td><td class="num">15.39</td><td class="num">14.86</td><td class="num">8.02</td><td class="num">6.51</td></tr><tr><td class="">BlackHigh_vs_BlackLow_mean_bias_pct</td><td class="num">5.88</td><td class="num">65.38</td><td class="num">50.05</td><td class="num">-11.25</td><td class="num">311.90</td><td class="num">92.19</td></tr><tr><td class="">WhiteLow_vs_WhiteHigh_mean_bias_pct</td><td class="num">4.92</td><td class="num">-30.59</td><td class="num">-29.72</td><td class="num">-15.50</td><td class="num">-74.08</td><td class="num">-41.17</td></tr></tbody></table></div>
-    </section>
+<p>This proxy is enough for Figure 3B-style sensitivity analysis, but not an exact reconstruction of the authors' implementation.</p>
 
-    <section>
-      <h2>分支汇总</h2>
-      <div class="table-wrap"><table><thead><tr><th>Variant</th><th>Mass WL -&gt; BH</th><th>Mass BH -&gt; WL</th><th>Bias WL -&gt; BH</th><th>Bias BH -&gt; WL</th><th>Black High vs Low</th><th>White Low vs High</th></tr></thead><tbody><tr><td class="">expanded_compas_groups</td><td class="num">16.84</td><td class="num">11.04</td><td class="num">23.53</td><td class="num">9.81</td><td class="num">65.38</td><td class="num">-30.59</td></tr><tr><td class="">expanded_equal_opportunity_proxy_compas_groups</td><td class="num">20.82</td><td class="num">17.61</td><td class="num">27.09</td><td class="num">15.39</td><td class="num">50.05</td><td class="num">-29.72</td></tr><tr><td class="">paperish_compas_groups</td><td class="num">13.08</td><td class="num">9.29</td><td class="num">17.38</td><td class="num">14.86</td><td class="num">-11.25</td><td class="num">-15.50</td></tr><tr><td class="">criminal_only_compas_groups</td><td class="num">19.90</td><td class="num">15.64</td><td class="num">46.94</td><td class="num">8.02</td><td class="num">311.90</td><td class="num">-74.08</td></tr><tr><td class="">paper_model_criminal_distance_compas_groups</td><td class="num">13.08</td><td class="num">9.29</td><td class="num">21.66</td><td class="num">6.51</td><td class="num">92.19</td><td class="num">-41.17</td></tr></tbody></table></div>
-    </section>
+<hr>
 
-    <section>
-      <h2>COMPAS 原始错误率背景</h2>
-      <p>直接把 COMPAS <code>Low</code> vs <code>Medium/High</code> 当作二元预测时，Black 与 White 的 FPR/FNR 差异如下。这与 ProPublica 报告里的方向一致：Black false positive rate 更高，White false negative rate 更高。</p>
-      <div class="table-wrap"><table><thead><tr><th>Race</th><th>FPR</th><th>FNR</th><th>TPR</th><th>TP</th><th>FP</th><th>TN</th><th>FN</th></tr></thead><tbody><tr><td class="num">Black</td><td class="num">0.42</td><td class="num">0.28</td><td class="num">0.72</td><td class="num">1,188.00</td><td class="num">641.00</td><td class="num">873.00</td><td class="num">473.00</td></tr><tr><td class="num">White</td><td class="num">0.22</td><td class="num">0.50</td><td class="num">0.50</td><td class="num">414.00</td><td class="num">282.00</td><td class="num">999.00</td><td class="num">408.00</td></tr></tbody></table></div>
-    </section>
+<h2>Numerical Check</h2>
 
-    <section>
-      <h2>矩阵样例</h2>
-      <h3>Figure 3A 风格图 mass row percentage</h3>
-      <div class="table-wrap"><table class="matrix"><tbody><tr><th></th><th>WhiteLow</th><th>WhiteHigh</th><th>BlackLow</th><th>BlackHigh</th></tr><tr><th>WhiteLow</th><td class="num">48.32</td><td class="num">12.33</td><td class="num">20.61</td><td class="num">18.74</td></tr><tr><th>WhiteHigh</th><td class="num">28.71</td><td class="num">14.48</td><td class="num">22.51</td><td class="num">34.31</td></tr><tr><th>BlackLow</th><td class="num">23.78</td><td class="num">13.08</td><td class="num">31.51</td><td class="num">31.64</td></tr><tr><th>BlackHigh</th><td class="num">11.56</td><td class="num">13.31</td><td class="num">25.29</td><td class="num">49.85</td></tr></tbody></table></div>
-      <h3>Figure 3B 风格图 mass row percentage</h3>
-      <div class="table-wrap"><table class="matrix"><tbody><tr><th></th><th>WhiteLow</th><th>WhiteHigh</th><th>BlackLow</th><th>BlackHigh</th></tr><tr><th>WhiteLow</th><td class="num">39.42</td><td class="num">6.48</td><td class="num">43.01</td><td class="num">11.09</td></tr><tr><th>WhiteHigh</th><td class="num">29.20</td><td class="num">18.13</td><td class="num">30.66</td><td class="num">22.02</td></tr><tr><th>BlackLow</th><td class="num">20.34</td><td class="num">13.94</td><td class="num">44.06</td><td class="num">21.66</td></tr><tr><th>BlackHigh</th><td class="num">9.27</td><td class="num">27.27</td><td class="num">20.29</td><td class="num">43.17</td></tr></tbody></table></div>
-      <h3>Criminal-only bias row percentage</h3>
-      <div class="table-wrap"><table class="matrix"><tbody><tr><th></th><th>WhiteLow</th><th>WhiteHigh</th><th>BlackLow</th><th>BlackHigh</th></tr><tr><th>WhiteLow</th><td class="num">16.96</td><td class="num">19.50</td><td class="num">16.59</td><td class="num">46.94</td></tr><tr><th>WhiteHigh</th><td class="num">8.37</td><td class="num">13.59</td><td class="num">10.17</td><td class="num">67.86</td></tr><tr><th>BlackLow</th><td class="num">15.12</td><td class="num">16.93</td><td class="num">14.10</td><td class="num">53.85</td></tr><tr><th>BlackHigh</th><td class="num">8.02</td><td class="num">16.18</td><td class="num">10.70</td><td class="num">65.11</td></tr></tbody></table></div>
-    </section>
+<p>The first highlighted paper number is approximately recovered by the criminal-history-only distance variant. The second highlighted number is not; that mismatch is the main evidence that Section 4.2 contains unrecoverable implementation choices.</p>
 
-    <section>
-      <h2>GitHub 上传建议</h2>
-      <p>建议上传整个 <code>section4_2_compas_reproduction</code> 文件夹，但排除系统文件和缓存。最小可复现集合如下：</p>
-      <ul class="files">
-        <li><code>report.html</code>：静态 HTML 报告，适合 GitHub Pages 展示。</li>
-        <li><code>README.md</code>：GitHub 首页说明。</li>
-        <li><code>reproduce_compas_section4_2.py</code>：复现实验脚本。</li>
-        <li><code>build_html_report.py</code>：HTML 报告生成脚本。</li>
-        <li><code>requirements.txt</code>：Python 依赖。</li>
-        <li><code>REPORT.md</code> 与 <code>EQUAL_OPPORTUNITY_CLASSIFIER_NOTES.md</code>：文字版说明。</li>
-        <li><code>outputs/</code>：结果 CSV 和图片。</li>
-      </ul>
-      <div class="callout warning">
-        <p><strong>数据文件是否上传：</strong><code>data/compas-scores-two-years.csv</code> 来自公开 ProPublica 仓库，可以上传；但为了仓库更轻，也可以不上传，让脚本运行时自动下载。若不上传数据，请在 README 中注明来源。</p>
-      </div>
-      <p>不要上传 <code>.DS_Store</code>、<code>__pycache__/</code>、<code>.pyc</code>、临时目录或本地虚拟环境。</p>
-    </section>
+<div class="table-wrap"><table><thead><tr><th>Metric</th><th>Paper</th><th>Criminal only</th><th>Expanded</th><th>EO proxy</th></tr></thead><tbody><tr><td class="">WhiteLow_to_BlackHigh_bias_share</td><td class="num">43.80</td><td class="num">46.94</td><td class="num">23.53</td><td class="num">27.09</td></tr><tr><td class="">BlackHigh_to_WhiteLow_bias_share</td><td class="num">48.30</td><td class="num">8.02</td><td class="num">9.81</td><td class="num">15.39</td></tr><tr><td class="">BlackHigh_vs_BlackLow_mean_bias_pct</td><td class="num">5.88</td><td class="num">311.90</td><td class="num">65.38</td><td class="num">50.05</td></tr><tr><td class="">WhiteLow_vs_WhiteHigh_mean_bias_pct</td><td class="num">4.92</td><td class="num">-74.08</td><td class="num">-30.59</td><td class="num">-29.72</td></tr></tbody></table></div>
 
-    <section>
-      <h2>复运行命令</h2>
-      <pre><code>python3 -m pip install -r requirements.txt
+<h3>Selected Variants</h3>
+<div class="table-wrap"><table><thead><tr><th>Variant</th><th>Bias WL -&gt; BH</th><th>Bias BH -&gt; WL</th><th>Mass WL -&gt; BH</th><th>Mass BH -&gt; WL</th></tr></thead><tbody><tr><td class="">expanded_compas_groups</td><td class="num">23.53</td><td class="num">9.81</td><td class="num">16.84</td><td class="num">11.04</td></tr><tr><td class="">expanded_equal_opportunity_proxy_compas_groups</td><td class="num">27.09</td><td class="num">15.39</td><td class="num">20.82</td><td class="num">17.61</td></tr><tr><td class="">criminal_only_compas_groups</td><td class="num">46.94</td><td class="num">8.02</td><td class="num">19.90</td><td class="num">15.64</td></tr></tbody></table></div>
+
+<h3>COMPAS Baseline Error Rates</h3>
+<p>Using <code>Low</code> vs. <code>Medium/High</code> directly, the familiar COMPAS asymmetry appears: Black FPR is higher, White FNR is higher.</p>
+<div class="table-wrap"><table><thead><tr><th>Race</th><th>FPR</th><th>FNR</th><th>TPR</th></tr></thead><tbody><tr><td class="">Black</td><td class="num">0.42</td><td class="num">0.28</td><td class="num">0.72</td></tr><tr><td class="">White</td><td class="num">0.22</td><td class="num">0.50</td><td class="num">0.50</td></tr></tbody></table></div>
+
+<hr>
+
+<h2>Transport Matrices</h2>
+
+<h3>Figure 3A mass row percentage</h3>
+<div class="table-wrap"><table class="matrix"><tbody><tr><th></th><th>WhiteLow</th><th>WhiteHigh</th><th>BlackLow</th><th>BlackHigh</th></tr><tr><th>WhiteLow</th><td class="num">48.32</td><td class="num">12.33</td><td class="num">20.61</td><td class="num">18.74</td></tr><tr><th>WhiteHigh</th><td class="num">28.71</td><td class="num">14.48</td><td class="num">22.51</td><td class="num">34.31</td></tr><tr><th>BlackLow</th><td class="num">23.78</td><td class="num">13.08</td><td class="num">31.51</td><td class="num">31.64</td></tr><tr><th>BlackHigh</th><td class="num">11.56</td><td class="num">13.31</td><td class="num">25.29</td><td class="num">49.85</td></tr></tbody></table></div>
+
+<h3>Figure 3B mass row percentage</h3>
+<div class="table-wrap"><table class="matrix"><tbody><tr><th></th><th>WhiteLow</th><th>WhiteHigh</th><th>BlackLow</th><th>BlackHigh</th></tr><tr><th>WhiteLow</th><td class="num">39.42</td><td class="num">6.48</td><td class="num">43.01</td><td class="num">11.09</td></tr><tr><th>WhiteHigh</th><td class="num">29.20</td><td class="num">18.13</td><td class="num">30.66</td><td class="num">22.02</td></tr><tr><th>BlackLow</th><td class="num">20.34</td><td class="num">13.94</td><td class="num">44.06</td><td class="num">21.66</td></tr><tr><th>BlackHigh</th><td class="num">9.27</td><td class="num">27.27</td><td class="num">20.29</td><td class="num">43.17</td></tr></tbody></table></div>
+
+<hr>
+
+<h2>Re-run</h2>
+
+<pre class="code"><code>python3 -m pip install -r requirements.txt
 python3 reproduce_compas_section4_2.py
 python3 build_html_report.py</code></pre>
-    </section>
 
-    <footer>
-      <p>Generated from local reproduction outputs. This report is an audit-style reconstruction, not an official reproduction by the paper authors.</p>
-    </footer>
-  </main>
+</div>
 </body>
 </html>

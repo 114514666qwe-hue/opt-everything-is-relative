@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build a static HTML report for the COMPAS Section 4.2 reproduction."""
+"""Build the static HTML report for the COMPAS Section 4.2 reproduction."""
 
 from __future__ import annotations
 
@@ -18,25 +18,25 @@ def read_csv(path: Path) -> list[dict[str, str]]:
         return list(csv.DictReader(handle))
 
 
-def fmt(value: str) -> str:
+def fmt(value: object) -> str:
     if value == "":
         return ""
     try:
         number = float(value)
-    except ValueError:
-        return html.escape(value)
+    except (TypeError, ValueError):
+        return html.escape(str(value))
     if abs(number) >= 100:
         return f"{number:,.2f}"
     return f"{number:.2f}"
 
 
-def table_from_rows(rows: list[dict[str, str]], columns: list[tuple[str, str]]) -> str:
+def table_from_rows(rows: list[dict[str, object]], columns: list[tuple[str, str]]) -> str:
     header = "".join(f"<th>{html.escape(label)}</th>" for _, label in columns)
     body_rows = []
     for row in rows:
         cells = []
         for key, _ in columns:
-            cls = "num" if key != "variant" and key != "metric" else ""
+            cls = "num" if key not in {"variant", "metric", "race"} else ""
             cells.append(f'<td class="{cls}">{fmt(row.get(key, ""))}</td>')
         body_rows.append("<tr>" + "".join(cells) + "</tr>")
     return f"<table><thead><tr>{header}</tr></thead><tbody>{''.join(body_rows)}</tbody></table>"
@@ -44,8 +44,7 @@ def table_from_rows(rows: list[dict[str, str]], columns: list[tuple[str, str]]) 
 
 def matrix_table(path: Path) -> str:
     with path.open(newline="", encoding="utf-8") as handle:
-        reader = csv.reader(handle)
-        rows = list(reader)
+        rows = list(csv.reader(handle))
     header = rows[0]
     html_rows = [
         "<tr><th></th>" + "".join(f"<th>{html.escape(c)}</th>" for c in header[1:]) + "</tr>"
@@ -57,7 +56,12 @@ def matrix_table(path: Path) -> str:
             + "".join(f'<td class="num">{fmt(cell)}</td>' for cell in row[1:])
             + "</tr>"
         )
-    return f"<table class=\"matrix\"><tbody>{''.join(html_rows)}</tbody></table>"
+    return f'<table class="matrix"><tbody>{"".join(html_rows)}</tbody></table>'
+
+
+def inline_svg(path: Path) -> str:
+    svg = path.read_text(encoding="utf-8")
+    return svg.replace("<svg ", '<svg class="report-figure" ', 1)
 
 
 def main() -> None:
@@ -65,29 +69,36 @@ def main() -> None:
     comparison = read_csv(OUT / "comparison_with_paper.csv")
     diagnostics = json.loads((OUT / "data_diagnostics.json").read_text(encoding="utf-8"))
     confusion = json.loads((OUT / "compas_confusion_by_race.json").read_text(encoding="utf-8"))
+    figure_svg = inline_svg(OUT / "figure3_ab_style.svg")
 
-    summary_table = table_from_rows(
-        summary,
-        [
-            ("variant", "Variant"),
-            ("mass_pct_WhiteLow_to_BlackHigh", "Mass WL -> BH"),
-            ("mass_pct_BlackHigh_to_WhiteLow", "Mass BH -> WL"),
-            ("bias_pct_WhiteLow_to_BlackHigh", "Bias WL -> BH"),
-            ("bias_pct_BlackHigh_to_WhiteLow", "Bias BH -> WL"),
-            ("mean_bias_black_high_vs_black_low_pct", "Black High vs Low"),
-            ("mean_bias_white_low_vs_white_high_pct", "White Low vs High"),
-        ],
-    )
     comparison_table = table_from_rows(
         comparison,
         [
             ("metric", "Metric"),
             ("paper", "Paper"),
+            ("criminal_only_compas_groups", "Criminal only"),
             ("expanded_compas_groups", "Expanded"),
             ("expanded_equal_opportunity_proxy_compas_groups", "EO proxy"),
-            ("paperish_compas_groups", "Paper-ish"),
-            ("criminal_only_compas_groups", "Criminal only"),
-            ("paper_model_criminal_distance_compas_groups", "Paper model + criminal distance"),
+        ],
+    )
+    selected_summary = [
+        row
+        for row in summary
+        if row["variant"]
+        in {
+            "expanded_compas_groups",
+            "expanded_equal_opportunity_proxy_compas_groups",
+            "criminal_only_compas_groups",
+        }
+    ]
+    summary_table = table_from_rows(
+        selected_summary,
+        [
+            ("variant", "Variant"),
+            ("bias_pct_WhiteLow_to_BlackHigh", "Bias WL -> BH"),
+            ("bias_pct_BlackHigh_to_WhiteLow", "Bias BH -> WL"),
+            ("mass_pct_WhiteLow_to_BlackHigh", "Mass WL -> BH"),
+            ("mass_pct_BlackHigh_to_WhiteLow", "Mass BH -> WL"),
         ],
     )
     confusion_rows = [
@@ -96,244 +107,280 @@ def main() -> None:
             "fpr": values["fpr"],
             "fnr": values["fnr"],
             "tpr": values["tpr"],
-            "tp": values["tp"],
-            "fp": values["fp"],
-            "tn": values["tn"],
-            "fn": values["fn"],
         }
         for race, values in confusion.items()
     ]
     confusion_table = table_from_rows(
         confusion_rows,
-        [
-            ("race", "Race"),
-            ("fpr", "FPR"),
-            ("fnr", "FNR"),
-            ("tpr", "TPR"),
-            ("tp", "TP"),
-            ("fp", "FP"),
-            ("tn", "TN"),
-            ("fn", "FN"),
-        ],
+        [("race", "Race"), ("fpr", "FPR"), ("fnr", "FNR"), ("tpr", "TPR")],
     )
 
-    html_text = f"""<!doctype html>
-<html lang="zh-CN">
+    data_rows = [
+        {"item": "Raw rows", "value": diagnostics["raw_rows"]},
+        {"item": "Filtered rows", "value": diagnostics["filtered_rows_all_races"]},
+        {"item": "Black defendants", "value": diagnostics["black_count_all_races"]},
+        {"item": "White defendants", "value": diagnostics["white_count_all_races"]},
+        {"item": "Two-year recidivists", "value": diagnostics["two_year_recid_all_races"]},
+    ]
+    data_table = table_from_rows(data_rows, [("item", ""), ("value", "Count")])
+
+    html_text = f"""<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Section 4.2 COMPAS 复现实验报告</title>
-  <style>
-    :root {{
-      color-scheme: light;
-      --ink: #1f2933;
-      --muted: #5f6b7a;
-      --line: #d8dee8;
-      --soft: #f5f7fa;
-      --accent: #0f766e;
-      --accent-2: #c2410c;
-    }}
-    * {{ box-sizing: border-box; }}
-    body {{
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: var(--ink);
-      background: #ffffff;
-      line-height: 1.6;
-    }}
-    header {{
-      padding: 48px 28px 36px;
-      border-bottom: 1px solid var(--line);
-      background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
-    }}
-    main {{ max-width: 1120px; margin: 0 auto; padding: 28px; }}
-    .hero {{ max-width: 1120px; margin: 0 auto; }}
-    h1 {{ margin: 0 0 12px; font-size: clamp(2rem, 4vw, 3.6rem); line-height: 1.05; }}
-    h2 {{ margin: 42px 0 12px; font-size: 1.65rem; border-bottom: 1px solid var(--line); padding-bottom: 8px; }}
-    h3 {{ margin: 28px 0 8px; font-size: 1.2rem; }}
-    p {{ margin: 10px 0; }}
-    a {{ color: var(--accent); text-decoration: none; }}
-    a:hover {{ text-decoration: underline; }}
-    code, pre {{
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      background: #f1f5f9;
-      border: 1px solid #e2e8f0;
-      border-radius: 6px;
-    }}
-    code {{ padding: 1px 5px; }}
-    pre {{ padding: 14px; overflow-x: auto; }}
-    .lead {{ color: var(--muted); font-size: 1.08rem; max-width: 920px; }}
-    .cards {{
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 12px;
-      margin: 22px 0;
-    }}
-    .card {{
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      padding: 14px;
-      background: var(--soft);
-    }}
-    .card strong {{ display: block; font-size: 1.45rem; color: var(--accent); }}
-    figure {{ margin: 24px 0; }}
-    figure img {{
-      width: 100%;
-      height: auto;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: #fff;
-    }}
-    figcaption {{ color: var(--muted); font-size: 0.95rem; margin-top: 8px; }}
-    .table-wrap {{ overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }}
-    table {{ border-collapse: collapse; width: 100%; min-width: 760px; font-size: 0.92rem; }}
-    th, td {{ border-bottom: 1px solid var(--line); padding: 9px 10px; text-align: left; vertical-align: top; }}
-    th {{ background: #eef2f7; font-weight: 700; }}
-    tr:last-child td {{ border-bottom: none; }}
-    td.num {{ text-align: right; font-variant-numeric: tabular-nums; }}
-    table.matrix {{ min-width: 520px; }}
-    .callout {{
-      border-left: 4px solid var(--accent);
-      background: #ecfdf5;
-      padding: 12px 14px;
-      border-radius: 6px;
-      margin: 16px 0;
-    }}
-    .warning {{
-      border-left-color: var(--accent-2);
-      background: #fff7ed;
-    }}
-    .files li {{ margin: 5px 0; }}
-    footer {{
-      margin-top: 46px;
-      padding-top: 18px;
-      border-top: 1px solid var(--line);
-      color: var(--muted);
-      font-size: 0.92rem;
-    }}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Section 4.2 — COMPAS Reproduction</title>
+<script>
+MathJax = {{
+  tex: {{ inlineMath: [['$','$']] }},
+  options: {{ skipHtmlTags: ['script','noscript','style','textarea'] }}
+}};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+<style>
+  *, *::before, *::after {{ box-sizing: border-box; margin: 0; padding: 0; }}
+  body {{
+    font-family: "Georgia", serif;
+    background: #fafafa;
+    color: #1a1a2e;
+    line-height: 1.75;
+    padding: 0 0 60px;
+  }}
+  .hero {{
+    background: #1a1a2e;
+    color: #fff;
+    padding: 44px 60px 36px;
+  }}
+  .hero .label {{
+    font-family: monospace;
+    font-size: 0.72em;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #8899bb;
+    margin-bottom: 10px;
+  }}
+  .hero h1 {{
+    font-size: 1.75em;
+    font-weight: 700;
+    line-height: 1.25;
+    margin-bottom: 10px;
+    color: #e8eaf6;
+  }}
+  .hero .meta {{
+    font-size: 0.83em;
+    color: #8899bb;
+    font-family: sans-serif;
+  }}
+  .container {{
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 36px;
+  }}
+  h2 {{
+    font-size: 1.12em;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin: 44px 0 12px;
+    padding-bottom: 6px;
+    border-bottom: 1.5px solid #dde;
+  }}
+  h3 {{
+    font-size: 0.97em;
+    font-weight: 700;
+    color: #333;
+    margin: 28px 0 8px;
+  }}
+  p {{ margin: 10px 0; font-size: 0.97em; }}
+  a {{ color: #0f766e; text-decoration: none; }}
+  a:hover {{ text-decoration: underline; }}
+  table {{
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 0.9em;
+    margin: 16px 0;
+  }}
+  th, td {{
+    border: 1px solid #dde;
+    padding: 8px 14px;
+    text-align: left;
+    vertical-align: top;
+  }}
+  th {{ background: #f0f0f8; font-weight: 600; }}
+  td.num {{ text-align: right; font-variant-numeric: tabular-nums; }}
+  table.matrix {{ min-width: 520px; }}
+  .table-wrap {{ overflow-x: auto; }}
+  blockquote {{
+    border-left: 3px solid #8899bb;
+    margin: 18px 0;
+    padding: 10px 18px;
+    background: #f4f6fb;
+    font-size: 0.91em;
+    color: #444;
+    border-radius: 0 4px 4px 0;
+  }}
+  blockquote strong {{ color: #1a1a2e; }}
+  .fig-wrap {{
+    margin: 22px 0;
+    text-align: center;
+  }}
+  .fig-wrap .report-figure {{
+    width: 100%;
+    max-width: 860px;
+    height: auto;
+    border: 1px solid #e5e5ef;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    background: #fff;
+  }}
+  .fig-cap {{
+    font-size: 0.82em;
+    color: #666;
+    font-family: sans-serif;
+    margin-top: 8px;
+  }}
+  pre.code {{
+    background: #1e1e2e;
+    color: #cdd6f4;
+    border-radius: 6px;
+    padding: 18px 22px;
+    font-size: 0.83em;
+    font-family: "Fira Code", "Courier New", monospace;
+    overflow-x: auto;
+    line-height: 1.6;
+    margin: 14px 0 20px;
+    border: 1px solid #313244;
+  }}
+  code {{
+    font-family: "Fira Code", "Courier New", monospace;
+    background: #eef1f7;
+    border: 1px solid #dde;
+    border-radius: 4px;
+    padding: 1px 4px;
+  }}
+  pre.code code {{
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    color: inherit;
+  }}
+  .math-block {{
+    text-align: center;
+    margin: 18px 0;
+    font-size: 1.05em;
+  }}
+  hr {{
+    border: none;
+    border-top: 1px solid #dde;
+    margin: 36px 0;
+  }}
+  @media (max-width: 640px) {{
+    .hero {{ padding: 34px 24px 28px; }}
+    .container {{ padding: 0 22px; }}
+    table {{ font-size: 0.82em; }}
+  }}
+</style>
 </head>
 <body>
-  <header>
-    <div class="hero">
-      <h1>Section 4.2 COMPAS 复现实验报告</h1>
-      <p class="lead">基于 ProPublica COMPAS 数据，对论文 <em>Everything is Relative: Understanding Fairness with Optimal Transport</em> 的 Section 4.2 做审计式复现。重点是重建数据过滤、logistic policy、optimal transport coupling、group-wise bias decomposition，并制作 Figure 3A/3B 风格图。</p>
-    </div>
-  </header>
-  <main>
-    <section>
-      <h2>结论摘要</h2>
-      <div class="callout">
-        <p><strong>复现结论：</strong>数据过滤和 OT 方法链路可以复现，A/B 图的视觉结构已经重建；但原文 Figure 3A/3B 的精确流带宽度无法仅凭论文唯一推出。</p>
-      </div>
-      <p>最接近原文第一处数字的是 <code>criminal_only_compas_groups</code>：原文 <code>WhiteLow -> BlackHigh</code> 为 43.8%，本复现为 46.94%。但原文 <code>BlackHigh -> WhiteLow</code> 为 48.3%，本复现最佳分支仍只有 8.02%。这说明本文实验存在未公开的实现细节。</p>
-    </section>
 
-    <section>
-      <h2>数据核对</h2>
-      <p>数据来自 ProPublica 的 <a href="https://github.com/propublica/compas-analysis">compas-analysis</a> 仓库，使用标准过滤条件后，关键计数与论文附录一致。</p>
-      <div class="cards">
-        <div class="card"><span>原始样本</span><strong>{diagnostics["raw_rows"]}</strong></div>
-        <div class="card"><span>过滤后样本</span><strong>{diagnostics["filtered_rows_all_races"]}</strong></div>
-        <div class="card"><span>Black</span><strong>{diagnostics["black_count_all_races"]}</strong></div>
-        <div class="card"><span>White</span><strong>{diagnostics["white_count_all_races"]}</strong></div>
-        <div class="card"><span>Two-year recidivists</span><strong>{diagnostics["two_year_recid_all_races"]}</strong></div>
-      </div>
-      <pre><code>-30 &lt;= days_b_screening_arrest &lt;= 30
+<div class="hero">
+  <div class="label">Section 4.2</div>
+  <h1>COMPAS Experiment: Optimal Transport View</h1>
+  <div class="meta">Kwegyir-Aggrey, K., Santorella, R., Brown, S. M. &nbsp;·&nbsp; arXiv:2102.10349v1</div>
+</div>
+
+<div class="container">
+
+<h2>Setup</h2>
+
+<p>The experiment compares the ground-truth recidivism policy with COMPAS-style predictions on the ProPublica COMPAS dataset. Scores are binarized as <code>Low</code> vs. <code>Medium/High</code>, then grouped by race and risk label:</p>
+
+<table>
+  <tr><th>Object</th><th>Definition used here</th></tr>
+  <tr><td><strong>$F_{{true}}$</strong></td><td>Logistic regression score for two-year recidivism.</td></tr>
+  <tr><td><strong>$F_{{compas}}$</strong></td><td>Logistic regression score for the binary COMPAS label.</td></tr>
+  <tr><td><strong>Groups</strong></td><td><code>WhiteLow</code>, <code>WhiteHigh</code>, <code>BlackLow</code>, <code>BlackHigh</code>.</td></tr>
+  <tr><td><strong>OT cost</strong></td><td>$C_{{ij}}=\\left\\|F_{{true}}(x_i)-F_{{pred}}(x_j)\\right\\|_2$.</td></tr>
+</table>
+
+<p>For two-class outputs this cost is equivalent to sorting the predicted probabilities and matching quantiles. The script therefore computes the exact one-dimensional equal-mass OT coupling instead of storing a dense linear program.</p>
+
+<hr>
+
+<h2>Data Check</h2>
+
+<p>The filtering follows the standard ProPublica COMPAS analysis. These counts match the paper appendix, so the data slice is likely the same even though the authors did not release code.</p>
+
+<div class="table-wrap">{data_table}</div>
+
+<pre class="code"><code>-30 &lt;= days_b_screening_arrest &lt;= 30
 is_recid != -1
 c_charge_degree != "O"
 score_text != "N/A"</code></pre>
-    </section>
 
-    <section>
-      <h2>实验原理</h2>
-      <p>论文比较同一批个体上的两个 policy：<code>F_true</code> 拟合真实 two-year recidivism，<code>F_compas</code> 拟合 COMPAS 二元风险标签。这里将 <code>Low</code> 作为低风险，将 <code>Medium/High</code> 合并为高风险。</p>
-      <p>每个 policy 输出二分类概率向量：</p>
-      <pre><code>F(x_i) = [1 - p_i, p_i]
-C_ij = ||F_true(x_i) - F_pred(x_j)||_2</code></pre>
-      <p>二分类时，这个代价与 <code>|p_i - p_j|</code> 只差常数因子，因此脚本用一维分位数匹配精确求解 equal-mass empirical optimal transport。得到 coupling 后，再按四个 subgroup 聚合：<code>WhiteLow</code>、<code>WhiteHigh</code>、<code>BlackLow</code>、<code>BlackHigh</code>。</p>
-      <p>脚本同时保存 raw transport mass 分解和 <code>mass * feature_distance</code> 的 group-wise bias 分解。后者更接近论文的 individual/group bias 定义。</p>
-    </section>
+<hr>
 
-    <section>
-      <h2>Figure 3A/3B 风格图</h2>
-      <figure>
-        <img src="outputs/figure3_ab_style.svg" alt="Figure 3 A and B style alluvial reproduction">
-        <figcaption>A 图右侧使用 COMPAS 二元风险标签；B 图右侧使用 equal-opportunity proxy classifier。图用于复现视觉结构和实验逻辑，流带宽度不是原文精确数值。</figcaption>
-      </figure>
-      <div class="cards">
-        <div class="card"><a href="outputs/figure3A_compas_style.svg">打开 A 图单图</a></div>
-        <div class="card"><a href="outputs/figure3B_equal_opportunity_proxy_style.svg">打开 B 图单图</a></div>
-        <div class="card"><a href="outputs/figure3A_compas_style_mass_row_pct.csv">A 图 mass 矩阵</a></div>
-        <div class="card"><a href="outputs/figure3B_equal_opportunity_proxy_style_mass_row_pct.csv">B 图 mass 矩阵</a></div>
-      </div>
-    </section>
+<h2>Figure 3A/3B Style Reconstruction</h2>
 
-    <section>
-      <h2>Equal Opportunity Classifier 推测</h2>
-      <p>论文说第三个 logistic regression 训练在 COMPAS labels 上，并使用 Zafar et al. 的 equal opportunity constraint。论文背景部分将 Equal Opportunity 定义为真实正类条件下不同敏感组预测正率相等，也就是 equal TPR，等价于 equal FNR。</p>
-      <p>查到的 Zafar 公开实现是 <a href="https://github.com/mbilalzafar/fair-classification">fair-classification</a>。其中 <a href="https://github.com/mbilalzafar/fair-classification/tree/master/disparate_mistreatment">disparate_mistreatment</a> 支持 FPR/FNR 约束，COMPAS demo 在 <a href="https://github.com/mbilalzafar/fair-classification/tree/master/disparate_mistreatment/propublica_compas_data_demo">propublica_compas_data_demo</a>。因此本复现推测 Figure 3B 更接近 FNR/TPR constraint，而非普通 unconstrained logistic regression。</p>
-      <p>由于原文未给代码、划分、阈值、<code>tau</code>/<code>mu</code> 等参数，本复现使用一个透明代理模型：</p>
-      <pre><code>logistic loss on COMPAS label
+<p>The alluvial plot below is embedded directly in this HTML file, so GitHub Pages does not need to resolve a separate image path.</p>
+
+<div class="fig-wrap">
+{figure_svg}
+  <div class="fig-cap">Figure 3-style transport maps. A uses COMPAS predictions; B uses the equal-opportunity proxy classifier. Widths reproduce the qualitative structure, not the paper's exact hidden implementation.</div>
+</div>
+
+<blockquote>
+<strong>Reading the plot.</strong><br>
+The left side is the ground-truth risk group; the right side is the predicted risk group. A large crossing band indicates that individuals in one subgroup are transported toward outcomes typical of another subgroup.
+</blockquote>
+
+<hr>
+
+<h2>Equal Opportunity Classifier</h2>
+
+<p>The paper says its third classifier is a logistic regression trained on COMPAS labels with the Zafar et al. equal-opportunity constraint. The exact code, split, threshold, and constraint strength are not given.</p>
+
+<p>Here it is treated as an FNR/TPR constraint: among true recidivists, Black and White predicted positive rates should be close. The proxy used here is</p>
+
+<pre class="code"><code>logistic loss on COMPAS label
 + penalty * (mean_score_black_true_positive - mean_score_white_true_positive)^2</code></pre>
-      <p>详细说明见 <a href="EQUAL_OPPORTUNITY_CLASSIFIER_NOTES.md">EQUAL_OPPORTUNITY_CLASSIFIER_NOTES.md</a>。</p>
-    </section>
 
-    <section>
-      <h2>与原文数值对比</h2>
-      <div class="table-wrap">{comparison_table}</div>
-    </section>
+<p>This proxy is enough for Figure 3B-style sensitivity analysis, but not an exact reconstruction of the authors' implementation.</p>
 
-    <section>
-      <h2>分支汇总</h2>
-      <div class="table-wrap">{summary_table}</div>
-    </section>
+<hr>
 
-    <section>
-      <h2>COMPAS 原始错误率背景</h2>
-      <p>直接把 COMPAS <code>Low</code> vs <code>Medium/High</code> 当作二元预测时，Black 与 White 的 FPR/FNR 差异如下。这与 ProPublica 报告里的方向一致：Black false positive rate 更高，White false negative rate 更高。</p>
-      <div class="table-wrap">{confusion_table}</div>
-    </section>
+<h2>Numerical Check</h2>
 
-    <section>
-      <h2>矩阵样例</h2>
-      <h3>Figure 3A 风格图 mass row percentage</h3>
-      <div class="table-wrap">{matrix_table(OUT / "figure3A_compas_style_mass_row_pct.csv")}</div>
-      <h3>Figure 3B 风格图 mass row percentage</h3>
-      <div class="table-wrap">{matrix_table(OUT / "figure3B_equal_opportunity_proxy_style_mass_row_pct.csv")}</div>
-      <h3>Criminal-only bias row percentage</h3>
-      <div class="table-wrap">{matrix_table(OUT / "criminal_only_compas_groups_bias_row_pct.csv")}</div>
-    </section>
+<p>The first highlighted paper number is approximately recovered by the criminal-history-only distance variant. The second highlighted number is not; that mismatch is the main evidence that Section 4.2 contains unrecoverable implementation choices.</p>
 
-    <section>
-      <h2>GitHub 上传建议</h2>
-      <p>建议上传整个 <code>section4_2_compas_reproduction</code> 文件夹，但排除系统文件和缓存。最小可复现集合如下：</p>
-      <ul class="files">
-        <li><code>report.html</code>：静态 HTML 报告，适合 GitHub Pages 展示。</li>
-        <li><code>README.md</code>：GitHub 首页说明。</li>
-        <li><code>reproduce_compas_section4_2.py</code>：复现实验脚本。</li>
-        <li><code>build_html_report.py</code>：HTML 报告生成脚本。</li>
-        <li><code>requirements.txt</code>：Python 依赖。</li>
-        <li><code>REPORT.md</code> 与 <code>EQUAL_OPPORTUNITY_CLASSIFIER_NOTES.md</code>：文字版说明。</li>
-        <li><code>outputs/</code>：结果 CSV 和图片。</li>
-      </ul>
-      <div class="callout warning">
-        <p><strong>数据文件是否上传：</strong><code>data/compas-scores-two-years.csv</code> 来自公开 ProPublica 仓库，可以上传；但为了仓库更轻，也可以不上传，让脚本运行时自动下载。若不上传数据，请在 README 中注明来源。</p>
-      </div>
-      <p>不要上传 <code>.DS_Store</code>、<code>__pycache__/</code>、<code>.pyc</code>、临时目录或本地虚拟环境。</p>
-    </section>
+<div class="table-wrap">{comparison_table}</div>
 
-    <section>
-      <h2>复运行命令</h2>
-      <pre><code>python3 -m pip install -r requirements.txt
+<h3>Selected Variants</h3>
+<div class="table-wrap">{summary_table}</div>
+
+<h3>COMPAS Baseline Error Rates</h3>
+<p>Using <code>Low</code> vs. <code>Medium/High</code> directly, the familiar COMPAS asymmetry appears: Black FPR is higher, White FNR is higher.</p>
+<div class="table-wrap">{confusion_table}</div>
+
+<hr>
+
+<h2>Transport Matrices</h2>
+
+<h3>Figure 3A mass row percentage</h3>
+<div class="table-wrap">{matrix_table(OUT / "figure3A_compas_style_mass_row_pct.csv")}</div>
+
+<h3>Figure 3B mass row percentage</h3>
+<div class="table-wrap">{matrix_table(OUT / "figure3B_equal_opportunity_proxy_style_mass_row_pct.csv")}</div>
+
+<hr>
+
+<h2>Re-run</h2>
+
+<pre class="code"><code>python3 -m pip install -r requirements.txt
 python3 reproduce_compas_section4_2.py
 python3 build_html_report.py</code></pre>
-    </section>
 
-    <footer>
-      <p>Generated from local reproduction outputs. This report is an audit-style reconstruction, not an official reproduction by the paper authors.</p>
-    </footer>
-  </main>
+</div>
 </body>
 </html>
 """
