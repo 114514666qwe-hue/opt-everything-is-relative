@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="430" viewBox="0 0 600 430" role="img">
+<style>
+  text { font-family: Arial, Helvetica, sans-serif; letter-spacing: 0; }
+  .panel-label { font-size: 28px; font-weight: 700; fill: #111; }
+  .axis-label { font-size: 18px; font-weight: 700; fill: #111; }
+  .group-label { font-size: 14px; fill: #333; paint-order: stroke; stroke: rgba(255,255,255,0.82); stroke-width: 3px; stroke-linejoin: round; }
+</style>
+<rect width="100%" height="100%" fill="white"/>
+<g transform="translate(0,0)">
+<path d="M 82 58 C 275.5 58 318.5 58 512 58 L 512 89.196 C 318.5 89.196 275.5 89.196 82 89.196 Z" fill="#009E73" opacity="0.98"/>
+<path d="M 82 89.196 C 275.5 89.196 318.5 144.91 512 144.91 L 512 152.873 C 318.5 152.873 275.5 97.159 82 97.159 Z" fill="#009E73" opacity="0.98"/>
+<path d="M 82 97.159 C 275.5 97.159 318.5 195.987 512 195.987 L 512 209.292 C 318.5 209.292 275.5 110.464 82 110.464 Z" fill="#009E73" opacity="0.98"/>
+<path d="M 82 110.464 C 275.5 110.464 318.5 279.822 512 279.822 L 512 291.918 C 318.5 291.918 275.5 122.56 82 122.56 Z" fill="#009E73" opacity="0.98"/>
+<path d="M 82 138.56 C 275.5 138.56 318.5 89.196 512 89.196 L 512 101.09 C 318.5 101.09 275.5 150.454 82 150.454 Z" fill="#D55E00" opacity="0.98"/>
+<path d="M 82 150.454 C 275.5 150.454 318.5 152.873 512 152.873 L 512 158.87 C 318.5 158.87 275.5 156.451 82 156.451 Z" fill="#D55E00" opacity="0.98"/>
+<path d="M 82 156.451 C 275.5 156.451 318.5 209.292 512 209.292 L 512 218.615 C 318.5 218.615 275.5 165.775 82 165.775 Z" fill="#D55E00" opacity="0.98"/>
+<path d="M 82 165.775 C 275.5 165.775 318.5 291.918 512 291.918 L 512 306.13 C 318.5 306.13 275.5 179.987 82 179.987 Z" fill="#D55E00" opacity="0.98"/>
+<path d="M 82 195.987 C 275.5 195.987 318.5 101.09 512 101.09 L 512 119.233 C 318.5 119.233 275.5 214.13 82 214.13 Z" fill="#0072B2" opacity="0.98"/>
+<path d="M 82 214.13 C 275.5 214.13 318.5 158.87 512 158.87 L 512 168.849 C 318.5 168.849 275.5 224.109 82 224.109 Z" fill="#0072B2" opacity="0.98"/>
+<path d="M 82 224.109 C 275.5 224.109 318.5 218.615 512 218.615 L 512 242.655 C 318.5 242.655 275.5 248.149 82 248.149 Z" fill="#0072B2" opacity="0.98"/>
+<path d="M 82 248.149 C 275.5 248.149 318.5 306.13 512 306.13 L 512 330.271 C 318.5 330.271 275.5 272.289 82 272.289 Z" fill="#0072B2" opacity="0.98"/>
+<path d="M 82 288.289 C 275.5 288.289 318.5 119.233 512 119.233 L 512 128.91 C 318.5 128.91 275.5 297.966 82 297.966 Z" fill="#E69F00" opacity="0.98"/>
+<path d="M 82 297.966 C 275.5 297.966 318.5 168.849 512 168.849 L 512 179.987 C 318.5 179.987 275.5 309.103 82 309.103 Z" fill="#E69F00" opacity="0.98"/>
+<path d="M 82 309.103 C 275.5 309.103 318.5 242.655 512 242.655 L 512 263.822 C 318.5 263.822 275.5 330.271 82 330.271 Z" fill="#E69F00" opacity="0.98"/>
+<path d="M 82 330.271 C 275.5 330.271 318.5 330.271 512 330.271 L 512 372 C 318.5 372 275.5 372 82 372 Z" fill="#E69F00" opacity="0.98"/>
+<rect x="52" y="58" width="30" height="64.56" fill="#009E73" stroke="#333" stroke-width="1"/>
+<text class="group-label" x="60" y="94.28" text-anchor="start">WhiteLow</text>
+<rect x="52" y="138.56" width="30" height="41.427" fill="#D55E00" stroke="#333" stroke-width="1"/>
+<text class="group-label" x="60" y="163.273" text-anchor="start">WhiteHigh</text>
+<rect x="52" y="195.987" width="30" height="76.302" fill="#0072B2" stroke="#333" stroke-width="1"/>
+<text class="group-label" x="60" y="238.138" text-anchor="start">BlackLow</text>
+<rect x="52" y="288.289" width="30" height="83.711" fill="#E69F00" stroke="#333" stroke-width="1"/>
+<text class="group-label" x="60" y="334.145" text-anchor="start">BlackHigh</text>
+<rect x="512" y="58" width="30" height="70.91" fill="#009E73" stroke="#333" stroke-width="1"/>
+<text class="group-label" x="534" y="97.455" text-anchor="end">WhiteLow</text>
+<rect x="512" y="144.91" width="30" height="35.077" fill="#D55E00" stroke="#333" stroke-width="1"/>
+<text class="group-label" x="534" y="166.448" text-anchor="end">WhiteHigh</text>
+<rect x="512" y="195.987" width="30" height="67.836" fill="#0072B2" stroke="#333" stroke-width="1"/>
+<text class="group-label" x="534" y="233.905" text-anchor="end">BlackLow</text>
+<rect x="512" y="279.822" width="30" height="92.178" fill="#E69F00" stroke="#333" stroke-width="1"/>
+<text class="group-label" x="534" y="329.911" text-anchor="end">BlackHigh</text>
+<text class="panel-label" x="20" y="36">A.</text>
+<text class="axis-label" x="52" y="404" text-anchor="start">Ground Truth</text>
+<text class="axis-label" x="542" y="404" text-anchor="end">Predicted</text>
+</g>
+</svg>
